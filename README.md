@@ -1,5 +1,14 @@
 # KrishiSahyak (कृषि सहायक) - Farming Schemes RAG Service
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge&logo=render)](https://krishi-sahyak-rag.onrender.com)
+
+👉 **Live Web App:** [https://krishi-sahyak-rag.onrender.com](https://your-app-name.onrender.com)  
+👉 **Live API Docs:** [https://krishi-sahyak-rag.onrender.com/docs](https://your-app-name.onrender.com/docs)
+
+
+
+# KrishiSahyak (कृषि सहायक) - Farming Schemes RAG Service
+
 An intelligent Retrieval-Augmented Generation (RAG) backend built with **FastAPI**, **Sentence-Transformers**, **In-Memory Cosine Similarity Vector Store (NumPy)**, and **Groq LLM (Llama 3.3)**.
 
 Provides instant, grounded, and hallucination-free guidance on 14+ Indian Government agricultural schemes, credit policies, crop insurance, and subsidies.
