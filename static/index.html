@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Krishi Sahyak — Farming Scheme Advisor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --paper: #F3F0E8;
+      --ink: #2A2118;
+      --leaf: #3F6B4F;
+      --rule: #D8D0BC;
+      --muted: #6b6255;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+    h1 {
+      font-family: 'Source Serif 4', serif;
+      font-weight: 700;
+      font-size: 1.75rem;
+      margin: 0 0 4px;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin: 0 0 40px;
+      font-size: 0.95rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: 2px solid var(--leaf);
+      outline-offset: 1px;
+    }
+    .suggestions {
+      margin: 12px 0 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .suggestions button {
+      background: none;
+      border: none;
+      color: var(--leaf);
+      text-decoration: underline;
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+      margin-right: 14px;
+    }
+    .ask-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    button.submit {
+      background: var(--leaf);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button.submit:disabled { opacity: 0.55; cursor: default; }
+
+    #answer {
+      display: none;
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+    }
+    #answer-text {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    #answer-text h1, #answer-text h2, #answer-text h3, #answer-text h4 {
+      font-family: 'Source Serif 4', serif;
+      margin: 16px 0 8px;
+      color: var(--ink);
+    }
+    #answer-text h2 { font-size: 1.2rem; color: var(--leaf); }
+    #answer-text h3 { font-size: 1.05rem; }
+    #answer-text p { margin: 0 0 12px; }
+    #answer-text ul, #answer-text ol { padding-left: 20px; margin: 8px 0 16px; }
+    #answer-text li { margin-bottom: 4px; }
+    #answer-text blockquote {
+      border-left: 3px solid var(--leaf);
+      margin: 12px 0;
+      padding-left: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    #answer-text table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.88rem;
+    }
+    #answer-text th, #answer-text td {
+      padding: 8px 10px;
+      border: 1px solid var(--rule);
+      text-align: left;
+    }
+    #answer-text th {
+      background: rgba(63, 107, 79, 0.08);
+      color: var(--leaf);
+      font-weight: 600;
+    }
+    .sources {
+      margin-top: 18px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .sources span {
+      border-left: 2px solid var(--leaf);
+      padding-left: 8px;
+      margin-right: 14px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .error { color: #a3402c; }
+
+    section.catalog {
+      margin-top: 56px;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+    }
+    section.catalog h2 {
+      font-family: 'Source Serif 4', serif;
+      font-size: 1.15rem;
+      margin: 0 0 16px;
+    }
+    input#filter {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      font: inherit;
+      margin-bottom: 16px;
+    }
+    .scheme-row {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .scheme-row .name {
+      font-weight: 500;
+    }
+    .scheme-row .cat {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Krishi Sahyak</h1>
+    <p class="subtitle">Ask about Indian government farming schemes — subsidies, eligibility, and how to apply.</p>
+
+    <form id="ask-form">
+      <textarea id="question" placeholder="e.g. What is the financial benefit under PM-KISAN and who is eligible?" required></textarea>
+      <p class="suggestions">
+        Try:
+        <button type="button" data-q="How much money do farmers get under PM-KISAN and what is the eligibility?">PM-KISAN</button>
+        <button type="button" data-q="What subsidy is provided for installing drip irrigation systems?">Drip irrigation subsidy</button>
+        <button type="button" data-q="How can I get insurance compensation for crop loss due to drought?">Crop insurance</button>
+      </p>
+      <div class="ask-row">
+        <button type="submit" class="submit" id="submit-btn">Ask</button>
+      </div>
+    </form>
+
+    <div id="answer">
+      <div id="answer-text"></div>
+      <div class="sources" id="sources"></div>
+    </div>
+
+    <section class="catalog">
+      <h2>Indexed schemes</h2>
+      <input type="text" id="filter" placeholder="Filter by name..." />
+      <div id="scheme-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('ask-form');
+    const questionInput = document.getElementById('question');
+    const answerBox = document.getElementById('answer');
+    const answerText = document.getElementById('answer-text');
+    const sourcesBox = document.getElementById('sources');
+    const submitBtn = document.getElementById('submit-btn');
+
+    document.querySelectorAll('.suggestions button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        questionInput.value = btn.dataset.q;
+        questionInput.focus();
+      });
+    });
+
+    function renderAnswer(text) {
+      if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+        return marked.parse(text);
+      }
+      return text.replace(/\n/g, '<br>');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Thinking...';
+      answerBox.style.display = 'block';
+      answerText.textContent = 'Loading...';
+      sourcesBox.innerHTML = '';
+
+      try {
+        const res = await fetch('/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer demo-token'
+          },
+          body: JSON.stringify({ question })
+        });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const data = await res.json();
+
+        if (data.answer) {
+          answerText.innerHTML = renderAnswer(data.answer);
+        } else {
+          answerText.textContent = '(no answer returned)';
+        }
+
+        const sources = data.sources || [];
+        sourcesBox.innerHTML = sources
+          .map(s => `<span>${typeof s === 'string' ? s : (s.scheme_name || s.name || 'source')}</span>`)
+          .join('');
+      } catch (err) {
+        answerText.innerHTML = `<span class="error">Something went wrong: ${err.message}</span>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Ask';
+      }
+    });
+
+    // Load scheme list
+    fetch('/schemes')
+      .then(r => r.json())
+      .then(data => {
+        const schemes = Array.isArray(data) ? data : (data.schemes || []);
+        const list = document.getElementById('scheme-list');
+        const filter = document.getElementById('filter');
+
+        function render(items) {
+          list.innerHTML = items.map(s => `
+            <div class="scheme-row">
+              <div class="name">${s.name || s.scheme_name || 'Unnamed scheme'}</div>
+              <div class="cat">${s.category || ''}</div>
+            </div>
+          `).join('');
+        }
+        render(schemes);
+
+        filter.addEventListener('input', () => {
+          const q = filter.value.toLowerCase();
+          render(schemes.filter(s => (s.name || s.scheme_name || '').toLowerCase().includes(q)));
+        });
+      })
+      .catch(() => {
+        document.getElementById('scheme-list').textContent = 'Could not load schemes.';
+      });
+  </script>
+</body>
+</html>
