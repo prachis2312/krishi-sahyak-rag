@@ -11,7 +11,7 @@ class Settings:
     
     # Embedding Configuration
     # 'all-MiniLM-L6-v2': 384 dimensions, fast CPU inference (<15ms), ~80MB footprint
-    EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "all-MiniLM-L6-v2")
+    EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
     
     # Groq LLM Configuration
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")

@@ -1,13 +1,20 @@
-"""Embedding service using Sentence-Transformers.
+"""Embedding service using FastEmbed (ONNX Runtime backend).
 
 Features:
 - Singleton model initialization to avoid reloading heavy weights on every request.
-- Automatic L2 vector normalization so cosine similarity reduces to a fast dot product.
+- Manual L2 vector normalization so cosine similarity reduces to a fast dot product.
 - Batch encoding support for precomputing scheme document vectors during startup.
+
+Why FastEmbed instead of Sentence-Transformers:
+Sentence-Transformers depends on PyTorch, whose memory footprint (300MB+ just to
+import, before loading any model) exceeds free-tier hosting limits like Render's
+512MB cap. FastEmbed uses ONNX Runtime instead, running the same underlying
+all-MiniLM-L6-v2 model with a much smaller memory footprint, while producing
+embeddings of the same shape and (near-identical) quality.
 """
 
 import logging
-from typing import List, Union
+from typing import List
 import numpy as np
 from app.config import settings
 
@@ -24,52 +31,53 @@ class EmbeddingService:
         return cls._instance
 
     def _initialize_model(self):
-        """Initializes the SentenceTransformer model."""
+        """Initializes the FastEmbed model."""
         try:
-            from sentence_transformers import SentenceTransformer
-            logger.info(f"Loading Sentence-Transformer model: '{settings.EMBEDDING_MODEL_NAME}'...")
-            self._model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME)
-            logger.info("Sentence-Transformer model loaded successfully.")
+            from fastembed import TextEmbedding
+            model_name = settings.EMBEDDING_MODEL_NAME
+            if model_name == "all-MiniLM-L6-v2":
+                model_name = "sentence-transformers/all-MiniLM-L6-v2"
+            logger.info(f"Loading FastEmbed model: '{model_name}'...")
+            self._model = TextEmbedding(model_name=model_name)
+            logger.info("FastEmbed model loaded successfully.")
         except Exception as e:
-            logger.error(f"Failed to load SentenceTransformer: {e}. Falling back to deferred/mock mode.")
+            logger.error(f"Failed to load FastEmbed model: {e}. Falling back to deferred/mock mode.")
             self._model = None
 
     @property
     def is_loaded(self) -> bool:
         return self._model is not None
 
+    @staticmethod
+    def _normalize(vec: np.ndarray) -> np.ndarray:
+        """L2-normalize a vector so cosine similarity reduces to a dot product."""
+        norm = np.linalg.norm(vec)
+        if norm == 0:
+            return vec
+        return vec / norm
+
     def encode_text(self, text: str) -> np.ndarray:
-        """Encodes a single text string into a 1D L2-normalized numpy vector (shape: [384]).
-        
-        Why normalize_embeddings=True?
-        When vectors have unit norm (||v|| = 1), Cosine Similarity:
-            cos(u, v) = (u . v) / (||u|| * ||v||) == u . v (simple dot product)
-        This avoids expensive square root and norm computations during search queries.
-        """
+        """Encodes a single text string into a 1D L2-normalized numpy vector (shape: [384])."""
         if self._model is not None:
-            vector = self._model.encode(
-                text,
-                normalize_embeddings=True,
-                show_progress_bar=False
-            )
-            return np.array(vector, dtype=np.float32)
-        
+            # FastEmbed's .embed() returns a generator of arrays, one per input text.
+            # We pass a single-item list and take the first (and only) result.
+            vector = list(self._model.embed([text]))[0]
+            vector = np.array(vector, dtype=np.float32)
+            return self._normalize(vector)
+
         # Fallback dummy embedding (384 dimensions) for offline/testing if model couldn't load
-        logger.warning("Using fallback pseudo-random vector (SentenceTransformer not initialized).")
+        logger.warning("Using fallback pseudo-random vector (FastEmbed not initialized).")
         pseudo_vec = np.random.randn(384).astype(np.float32)
         return pseudo_vec / np.linalg.norm(pseudo_vec)
 
     def encode_batch(self, texts: List[str]) -> np.ndarray:
         """Encodes a list of text strings into a 2D numpy matrix of shape (N, 384)."""
         if self._model is not None:
-            vectors = self._model.encode(
-                texts,
-                normalize_embeddings=True,
-                batch_size=32,
-                show_progress_bar=False
-            )
-            return np.array(vectors, dtype=np.float32)
-        
+            vectors = list(self._model.embed(texts))
+            matrix = np.array(vectors, dtype=np.float32)
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            return matrix / np.maximum(norms, 1e-12)
+
         # Fallback dummy matrix
         logger.warning("Using fallback pseudo-random matrix.")
         mat = np.random.randn(len(texts), 384).astype(np.float32)
