@@ -2,8 +2,8 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge&logo=render)](https://krishi-sahyak-rag.onrender.com)
 
-👉 **Live Web App:** [https://krishi-sahyak-rag.onrender.com](https://your-app-name.onrender.com)  
-👉 **Live API Docs:** [https://krishi-sahyak-rag.onrender.com/docs](https://your-app-name.onrender.com/docs)
+👉 **Live Web App:** [https://krishi-sahyak-rag.onrender.com](https://krishi-sahyak-rag.onrender.com)  
+👉 **Live API Docs:** [https://krishi-sahyak-rag.onrender.com/docs](https://krishi-sahyak-rag.onrender.com/docs)
 
 
 
